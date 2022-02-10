@@ -16,9 +16,23 @@
 #define TRIGGER_PIN PD7
 
 volatile int TimerOverflow = 0;
+double distance[3] = {0, 0, 0};
+	
+ISR(TIMER1_OVF_vect)
+{
+	TimerOverflow++;	/* Increment Timer Overflow count */
+}
 
-void calculateDistance(uint8_t echo_pin){
+void writeValueToLcd(uint8_t x, uint8_t y, double value)
+{
 	char string[10];
+	dtostrf(value, 2, 2, string);/* distance to string */
+	lcd_gotoxy(x, y);
+	lcd_puts(string);
+}
+
+double calculateDistance(uint8_t echo_pin)
+{	
 	PORTD |= (1 << TRIGGER_PIN);
 	_delay_us(10);
 	PORTD &= (~(1 << TRIGGER_PIN));
@@ -36,38 +50,30 @@ void calculateDistance(uint8_t echo_pin){
 	
 	while(PIND & _BV(echo_pin)); // while 1, wait for low
 	long count = TCNT1 + (65535 * TimerOverflow); //calculate how many ticks the echo pin was HIGH
-	double distance = (double)count/427.21; // calculate distance
 	
-	dtostrf(distance, 2, 2, string);/* distance to string */
-	strcat(string, " cm   ");	/* Concat unit i.e.cm */
-	lcd_gotoxy(2, 0);
-	lcd_puts("Dist = ");
-	lcd_gotoxy(2, 7);	/* Print distance */
-	lcd_puts(string);
+	return (double)count/427.21; // calculate distance
 }
 
-
-
-ISR(TIMER1_OVF_vect)
+void readFromUSSensors()
 {
-	TimerOverflow++;	/* Increment Timer Overflow count */
+	distance[0] = calculateDistance(PIND0);
+	writeValueToLcd(0,0, distance[0]);
+	_delay_ms(50);
+	distance[1] = calculateDistance(PIND1);
+	writeValueToLcd(8,0, distance[1]);
+	_delay_ms(50);
+	distance[2] = calculateDistance(PIND2);
+	writeValueToLcd(0,1, distance[2]);
 }
 
 int main(void)
 {
-	char string[10];
-	long count;
-	double distance;
 	
 	DDRD = _BV(TRIGGER_PIN);		/* Make trigger pin as output */
-	PORTD = _BV(PIND0);		/* Turn on Pull-up */
+	PORTD = _BV(PIND0) | _BV(PIND1) | _BV(PIND2);		/* Turn on Pull-up */
 	
 	///////////lcd///////////////
 	DDRB = _BV(PB3);
-
-	/*TCCR1A = _BV(COM1B1) | _BV(WGM10);
-	TCCR1B = _BV(WGM12) | _BV(CS11);
-	OCR1B = 128;*/
 	TCCR0 =  _BV(WGM01) | _BV(WGM00) | _BV(CS01) | _BV(COM01);
 	OCR0 = 128;
 
@@ -82,7 +88,7 @@ int main(void)
 
 	while(1)
 	{
-		calculateDistance(PIND0);	
+		readFromUSSensors();
 		_delay_ms(500);
 	}
 }
