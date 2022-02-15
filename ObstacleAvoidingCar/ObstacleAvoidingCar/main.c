@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include "lcd.h"
 
-#define TRIGGER_PIN PD7
+#define TRIGGER_PIN PIND7
 #define FL_FORWARD 0x02
 #define FL_BACKWARD 0x01
 #define FR_FORWARD 0x08
@@ -32,8 +32,8 @@
 
 
 volatile int TimerOverflow = 0;
-double distance[3] = {0, 0, 0};
-uint8_t flag = 0, reversed = 0;
+double distance[3] = {0, 0, 0},turn_distance = 0;
+uint8_t flag = 0, reversed = 0, ukljuci=0;
 	
 ISR(TIMER1_OVF_vect)
 {
@@ -113,20 +113,27 @@ void moveCar(uint8_t value){
 
 void carDrive(){	
 	
-	if(distance[FRONT_SENSOR] > 8.00 && !reversed) //if there is room forward and did not reverse
+	readFromUSSensors();
+	if(distance[FRONT_SENSOR] > 115.00) distance[FRONT_SENSOR] = 115.00;
+	if(distance[FRONT_SENSOR] > 25.00) //if there is room forward and did not reverse
 		moveCar(FORWARD);
 	else
 	{
-		if(!(distance[LEFT_SENSOR] < 6 && distance[RIGHT_SENSOR] < 6)){ //if not stuck left & right
+		turn_distance = distance[FRONT_SENSOR];
+		if(!(distance[LEFT_SENSOR] < 14.00 && distance[RIGHT_SENSOR] < 14.00)){ //if not stuck left & right
 			
 			if(distance[LEFT_SENSOR] > distance[RIGHT_SENSOR]){ // if more room to the left
-				moveCar(LEFT);
+				while(distance[RIGHT_SENSOR] <= turn_distance){
+					moveCar(LEFT);
+				}
 				reversed=0;
 			}else if(distance[LEFT_SENSOR] < distance[RIGHT_SENSOR]){ //if more room to the right
 				moveCar(RIGHT);
+				_delay_ms(500);
 				reversed=0;
 			}else{ //if same go right
 				moveCar(RIGHT);
+				_delay_ms(500);
 				reversed=0;
 			}
 			
@@ -135,8 +142,8 @@ void carDrive(){
 			
 			//IF -> polako skretanje
 			moveCar(BACKWARD);
-			reversed = 1;
-			_delay_ms(500);
+			//reversed = 1;
+			_delay_ms(1500);
 		}
 	}
 }
@@ -147,6 +154,7 @@ int main(void)
 	DDRD = _BV(TRIGGER_PIN);		/* Make trigger pin as output */
 	PORTD = _BV(PIND0) | _BV(PIND1) | _BV(PIND2);		/* Turn on Pull-up */
 	DDRA = 0xff;
+	PORTB = _BV(0);
 
 	
 	///////////lcd///////////////
@@ -164,15 +172,19 @@ int main(void)
 	TCCR1B = _BV(CS10);
 	//GICR = _BV(INT0) | _BV(INT1);
 	sei();	/* Enable global interrupt */
-	
 	while(1)
 	{	
-		/*if(flag==1){
-			move_car();
-		}*/
-		calculateDistance(FRONT_SENSOR);
-		if(1){
-			carDrive();
+		//calculateDistance(FRONT_SENSOR);
+		//if(0){
+		//	carDrive();
+		//}
+		if(bit_is_clear(PINB, 0)) {
+			ukljuci = 1;
+		}
+		switch(ukljuci) {
+			case 1:
+				carDrive();
+				break;
 		}
 	}
 }
@@ -183,3 +195,5 @@ int main(void)
 //zadnji desni PA6, PA7
 
 //	_delay_ms(1); -> zavoj min
+
+
