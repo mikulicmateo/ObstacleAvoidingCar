@@ -4,7 +4,6 @@
  * Created: 9.2.2022. 14:38:37
  * Authors : Mateo Mikulic, Dominik Vicevic, Mauro Gizdulic
  */ 
-
 #define F_CPU 7372800UL
 #include <avr/io.h>
 #include <avr/interrupt.h>

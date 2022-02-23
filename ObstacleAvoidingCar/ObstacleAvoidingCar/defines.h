@@ -24,7 +24,7 @@
 #define RIGHT 0x96
 #define FRONT_SENSOR 0
 #define LEFT_SENSOR 1
-#define RIGHT_SENSOR 4 //TODO
+#define RIGHT_SENSOR 4
 #define SIDE_THRESH 13
 #define FRONT_THRESH 25
 #define TOO_FAR 115
@@ -33,7 +33,7 @@
 #define OCR_VAL 194
 #define REGISTER16BIT_MAX 65535
 #define RPM_DIFF 20
-#define RPM_LOW 3
+#define RPM_LOW 1
 #define TIMESX 20
 #define RECURSE 15
 #define STOP 0
