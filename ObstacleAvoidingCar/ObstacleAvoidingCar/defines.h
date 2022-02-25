@@ -37,6 +37,7 @@
 #define TIMESX 20
 #define RECURSE 5
 #define STOP 0
+#define DISTCONST 429.9
 
 
 #endif /* DEFINES_H_ */
