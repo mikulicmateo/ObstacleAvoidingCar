@@ -31,9 +31,11 @@ ISR(INT1_vect){
 	right_ticks++;
 }
 
-ISR(TIMER2_COMP_vect){
+ISR(TIMER2_COMP_vect)
+{
 	counter++;
-	if(counter == TIMESX){ // 20 times 0.05sec == 1 sec
+	if(counter == TIMESX) // 20 times 0.05sec == 1 sec
+	{
 		left_rpm = (left_ticks * MINUTE)/NUM_HOLES;
 		right_rpm = (right_ticks * MINUTE)/NUM_HOLES;
 		left_ticks=0;
@@ -51,7 +53,8 @@ void writeValueToLcd(uint8_t x, uint8_t y, double value)
 	lcd_puts(string);
 }
 
-void rpm_sensor_init(){
+void rpm_sensor_init()
+{
 	TCCR2 = _BV(WGM21) | _BV(CS22) | _BV(CS21) | _BV(CS20);
 	OCR2 = OCR_VAL;
 	GICR = _BV(INT0) | _BV(INT1);
@@ -59,7 +62,8 @@ void rpm_sensor_init(){
 	TIMSK |=  _BV(OCIE2);
 }
 
-void lcd_initialize(){
+void lcd_initialize()
+{
 	DDRB = _BV(PB3);
 	TCCR0 =  _BV(WGM01) | _BV(WGM00) | _BV(CS01) | _BV(COM01);
 	OCR0 = 128;
@@ -74,29 +78,22 @@ double calculateDistance(uint8_t echo_pin)
 	PORTD |= (1 << TRIGGER_PIN);
 	_delay_us(10);
 	PORTD &= (~(1 << TRIGGER_PIN));
-	
-	TCNT1 = 0;	/* Clear Timer counter */
-	TIFR = 1<<TOV1;	/* Clear Timer Overflow flag */
 
 	while((PIND & _BV(echo_pin)) == 0); // while 0, wait for high
 	
 	//reset timer and overflow
 	TCNT1 = 0;	/* Clear Timer counter */
 	TIFR = 1<<TOV1;	/* Clear Timer Overflow flag */
-	timer_overflow = 0;/* Clear Timer overflow count */
-	
+	timer_overflow = 0;/* Clear Timer overflow count */	
 	
 	while(PIND & _BV(echo_pin))// while 1, wait for low
 	{
 		if(timer_overflow > 3)
-		{
 			PORTD &= (~(1 << echo_pin));
-		}
 	}
 	long count = TCNT1 + (REGISTER16BIT_MAX * timer_overflow); //calculate how many ticks the echo pin was HIGH
 	
-	//TODO DO BETTER
-	return (double)count/427.21; // calculate distance 
+	return (double)count/429.9; // calculate distance 
 }
 
 void readFromUSSensors()
@@ -109,24 +106,14 @@ void readFromUSSensors()
 	_delay_ms(10);
 }
 
-void moveCar(uint8_t value){
+void moveCar(uint8_t value)
+{
 	PORTA = value;
 }
 
-uint8_t checkRPM(){
+uint8_t checkRPM()
+{
 	cli();
-	/*if(right_rpm > left_rpm){
-		if(right_rpm - left_rpm > (double) RPM_DIFF){
-			moveCar(STOP);
-			while(1);
-		}
-	}else if(left_rpm > right_rpm){
-		if(left_rpm - right_rpm > (double) RPM_DIFF){
-			moveCar(STOP);
-			while(1);
-		}
-		
-	}*/
 	if(right_rpm > (double) RPM_LOW && left_rpm > (double) RPM_LOW)
 	{
 		sei();
@@ -139,7 +126,8 @@ uint8_t checkRPM(){
 	}
 }
 
-void choose_left_right_back(uint8_t repetition){
+void choose_left_right_back(uint8_t repetition)
+{
 	if(repetition == 0)
 		return;
 	if(distance[LEFT_SENSOR] > (double) SIDE_THRESH || distance[RIGHT_SENSOR] > (double) SIDE_THRESH){ //if not stuck left & right
@@ -167,8 +155,8 @@ void choose_left_right_back(uint8_t repetition){
 	}
 }
 
-void carDrive(){	
-	
+void carDrive()
+{		
 	readFromUSSensors();
 	if(distance[FRONT_SENSOR] > (double) TOO_FAR) distance[FRONT_SENSOR] = (double) TOO_FAR;
 	if(distance[FRONT_SENSOR] > (double) FRONT_THRESH) //if there is room forward
@@ -203,9 +191,8 @@ int main(void)
 	sei();	/* Enable global interrupt */
 	while(1)
 	{	
-		if(bit_is_clear(PINB, 0)) {
+		if(bit_is_clear(PINB, 0))
 			turn_on = 1;
-		}
 		switch(turn_on) {
 			case 1:
 				if(first){
@@ -217,12 +204,3 @@ int main(void)
 		}
 	}
 }
-
-//prednji lijevi PA0,PA1
-//prednji desni PA2,PA3
-//zadnji lijevi PA4, PA5
-//zadnji desni PA6, PA7
-
-//	_delay_ms(1); -> zavoj min
-
-
