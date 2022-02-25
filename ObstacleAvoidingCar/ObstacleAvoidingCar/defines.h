@@ -35,7 +35,7 @@
 #define RPM_DIFF 20
 #define RPM_LOW 1
 #define TIMESX 20
-#define RECURSE 15
+#define RECURSE 5
 #define STOP 0
 
 
