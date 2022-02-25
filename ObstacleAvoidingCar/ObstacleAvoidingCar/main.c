@@ -93,7 +93,7 @@ double calculateDistance(uint8_t echo_pin)
 	}
 	long count = TCNT1 + (REGISTER16BIT_MAX * timer_overflow); //calculate how many ticks the echo pin was HIGH
 	
-	return (double)count/429.9; // calculate distance 
+	return (double)count/DISTCONST; // calculate distance 
 }
 
 void readFromUSSensors()
