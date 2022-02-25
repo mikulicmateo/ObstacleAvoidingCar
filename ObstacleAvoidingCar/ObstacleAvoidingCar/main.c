@@ -70,6 +70,7 @@ void lcd_initialize(){
 
 double calculateDistance(uint8_t echo_pin)
 {	
+	PORTD &= (~(1 << echo_pin));
 	PORTD |= (1 << TRIGGER_PIN);
 	_delay_us(10);
 	PORTD &= (~(1 << TRIGGER_PIN));
@@ -85,7 +86,13 @@ double calculateDistance(uint8_t echo_pin)
 	timer_overflow = 0;/* Clear Timer overflow count */
 	
 	
-	while(PIND & _BV(echo_pin)); // while 1, wait for low
+	while(PIND & _BV(echo_pin))// while 1, wait for low
+	{
+		if(timer_overflow > 3)
+		{
+			PORTD &= (~(1 << echo_pin));
+		}
+	}
 	long count = TCNT1 + (REGISTER16BIT_MAX * timer_overflow); //calculate how many ticks the echo pin was HIGH
 	
 	//TODO DO BETTER
@@ -107,7 +114,8 @@ void moveCar(uint8_t value){
 }
 
 uint8_t checkRPM(){
-	if(right_rpm > left_rpm){
+	cli();
+	/*if(right_rpm > left_rpm){
 		if(right_rpm - left_rpm > (double) RPM_DIFF){
 			moveCar(STOP);
 			while(1);
@@ -118,11 +126,17 @@ uint8_t checkRPM(){
 			while(1);
 		}
 		
-	}
+	}*/
 	if(right_rpm > (double) RPM_LOW && left_rpm > (double) RPM_LOW)
+	{
+		sei();
 		return 1;
+	}
 	else
+	{
+		sei();
 		return 0;
+	}
 }
 
 void choose_left_right_back(uint8_t repetition){
